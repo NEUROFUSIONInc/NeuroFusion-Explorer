@@ -73,8 +73,8 @@ const main = async (timeMinutes) => {
     let index = 0;
     for (index; index < channelNames.length; index++) {
       let ch_name = channelNames[index];
-      signalQualityEntry[ch_name + "_value"] = signalQuality[0].standardDeviation;
-      signalQualityEntry[ch_name + "_status"] = signalQuality[0].status;
+      signalQualityEntry[ch_name + "_value"] = signalQuality[index].standardDeviation;
+      signalQualityEntry[ch_name + "_status"] = signalQuality[index].status;
     }
 
     signalQualitySeries.push(signalQualityEntry);
@@ -200,4 +200,4 @@ const notion = new Notion({
   deviceId
 });
 
-main(5);
+main(10);
