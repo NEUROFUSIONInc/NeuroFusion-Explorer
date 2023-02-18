@@ -1,0 +1,6 @@
+*/data/*
+*/.env
+*.DS_Store
+
+# npm packages
+logger/node_modules/*
