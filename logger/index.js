@@ -200,4 +200,4 @@ const notion = new Notion({
   deviceId
 });
 
-main(10);
+main(30);
