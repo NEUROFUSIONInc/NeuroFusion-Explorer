@@ -100,7 +100,7 @@ class extractBundledEEG: # Extracts all json eeg data wihtin a folder in conveni
     def extractById(self, id): # extracts all json file locs with aan associated with an event id
         return self.tagIdMap[str(id)]
     
-    def extractByTags(self, tag): #extract based on tags
+    def extractByTags(self, tag): #extract based on tags in event json
         ret = dict()
         for x in self.categories[str(tag)]:
             ret[x] = self.tagIdMap[x]
@@ -161,7 +161,7 @@ def get_signal_quality_summary(signalQuality):
     # this helps us know what channels to discard in our analysis
     return channel_good_percentage
 
-def load_session_epochs(files: dict, _on: set, _channels: list = [],qualityCutoffFilter: int = 0, epochSize: int = -1):
+def load_session_epochs(files: dict, _on: set, _channels: list = [],qualityCutoffFilter: float = 0, epochSize: int = -1):
     """
     Takes a session of EEG data and the recordings concerned with and outputs filtered epochs
 
@@ -178,6 +178,7 @@ def load_session_epochs(files: dict, _on: set, _channels: list = [],qualityCutof
     # ingest all selected recordings into dfs
     _on+=["signalQuality","powerByBand"]
     _on = set(_on)
+
     on = dict()
     for x in _on:
         if str(files[x]).endswith(".csv"):
@@ -255,6 +256,9 @@ def load_session_epochs(files: dict, _on: set, _channels: list = [],qualityCutof
                 no_of_okay_samples += channel_states['great']
 
             percentage_good = no_of_okay_samples / sigSamp.shape[0]
+            # print("percentage_good", percentage_good)
+            # print("no_of_okay_samples", no_of_okay_samples)
+            # print("total_samples", sigSamp.shape[0])
             if percentage_good>=qualityCutoffFilter:
                 if x not in goodEpochStamps: goodEpochStamps[x] = [channel]
                 else: goodEpochStamps[x].append(channel)
@@ -426,23 +430,35 @@ def load_session_summery(files: dict, _channels: list = [], qualityCutoffFilter:
     return epochReturnStruct
 
 class analysisEngine():
-    def __init__(self,fileBundles:dict,epochSize=5,debug = False):
+    def __init__(self,fileBundles: dict,epochSize=5, qualityCutoffFilter=0.95, debug = False):
         """
         Generates basic analytics for recording groups
         
-        fileBundles: {recordingsTagName:[set of recordingIds], tagName: ....}  : dictionary of labeled filebundles as generated from extractBundledEEG
+        fileBundles: {recordingsTagName:[set of recordingIds when using extractByTags] / {single file bundle when using extractById}, tagName: ....}: 
+        dictionary of labeled filebundles as generated from extractBundledEEG
 
         epochSize: epoch size to use in seconds
+
+        qualityCutoffFilter: % of required good recordings to accept epoch for analysis
         
         """
         self.fileBundles = fileBundles
         self.fileBundleSummeries = {x:[] for x in self.fileBundles}
 
+
         for x in self.fileBundles:
+            # check if bundle contains single or multiple recordings
+            # main different is if it's a dict or list...
             sum = 0
-            for y in self.fileBundles[x]:
-                self.fileBundleSummeries[x].append(load_session_summery(self.fileBundles[x][y],qualityCutoffFilter=.95,epochSize=epochSize,returnEpoched=True,debug=debug))
-                sum += len(self.fileBundleSummeries[x][-1])
+            if len(self.fileBundles[x].keys()) > 1:
+                # this means it's an array of datasets based on tags
+                for y in self.fileBundles[x]:
+                    self.fileBundleSummeries[x].append(load_session_summery(self.fileBundles[x][y],qualityCutoffFilter=qualityCutoffFilter,epochSize=epochSize,returnEpoched=True,debug=debug))
+                    sum += len(self.fileBundleSummeries[x][-1])
+            else:
+                self.fileBundleSummeries[x].append(load_session_summery(self.fileBundles[x],qualityCutoffFilter=qualityCutoffFilter,epochSize=epochSize,returnEpoched=True,debug=debug))
+                sum += len(self.fileBundleSummeries[x])
+            
             print(f"{x} {len(self.fileBundles[x])} Recording Sessions Found, {sum} Epochs Extracted")
 
 
@@ -506,6 +522,10 @@ class analysisEngine():
 
         plt.show()
 
+
+"""
+Old methods that need to be reviewed/removed.
+"""
 def get_rolling_powerByBand(powerByBand, signalQuality, window_size=5):
     # we want to split the recording for a session in to 5sec chunks average
     # see if there's any difference in the average. 
