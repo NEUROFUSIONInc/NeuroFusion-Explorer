@@ -1,0 +1,2 @@
+startTimestamp,duration,data
+1705701095,0,{"id":2,"name":"Auditory Oddball - P300, Event Related Potential","description":"We want to understand how our brains react when something unexpected happens. They're particularly interested in a brain wave called the 'P300 wave'. This wave is like a signal your brain sends when it recognizes a change in the pattern of sounds. It usually occurs around 300 milliseconds after your brain registers the oddball sound. Start the experiment to see how your brain responds!","url":"/experiments/auditory_oddball.html","tags":[],"duration":0}
